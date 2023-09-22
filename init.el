@@ -161,7 +161,7 @@
   (kbd "gj") 'magit-section-forward
   (kbd "gk") 'magit-section-backward
   (kbd "TAB") 'magit-section-toggle
-  (kbd "RET") 'magit-diff-visit-file)
+  (kbd "RET") 'magit-visit-thing)
 
 (evil-define-key '(normal visual) magit-status-mode-map
   (kbd "s") 'magit-stage
