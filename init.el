@@ -155,17 +155,39 @@
 ;;;; TODO add vim bindings to this
 (evil-set-initial-state 'magit-status-mode 'normal)
 (evil-define-key 'normal magit-status-mode-map
+  (kbd "q") 'magit-mode-bury-buffer
   (kbd "c") 'magit-commit
   (kbd "j") 'magit-next-line
   (kbd "k") 'magit-previous-line
-  (kbd "gj") 'magit-section-forward
-  (kbd "gk") 'magit-section-backward
+  (kbd "}") 'magit-section-forward
+  (kbd "{") 'magit-section-backward
   (kbd "TAB") 'magit-section-toggle
-  (kbd "RET") 'magit-visit-thing)
+  (kbd "RET") 'magit-visit-thing
+  (kbd "i") 'magit-gitignore
+  (kbd "l") 'magit-log)
 
 (evil-define-key '(normal visual) magit-status-mode-map
   (kbd "s") 'magit-stage
   (kbd "u") 'magit-unstage)
+
+(evil-set-initial-state 'magit-log-mode 'normal)
+(evil-define-key 'normal magit-log-mode-map
+  (kbd "q") 'magit-log-bury-buffer
+  (kbd "j") 'magit-next-line
+  (kbd "k") 'magit-previous-line
+  (kbd "}") 'magit-section-forward
+  (kbd "{") 'magit-section-backward
+  (kbd "RET") 'magit-show-commit)
+
+(evil-set-initial-state 'magit-revision-mode 'normal)
+(evil-define-key 'normal magit-revision-mode-map
+  (kbd "j") 'magit-next-line
+  (kbd "k") 'magit-previous-line
+  (kbd "}") 'magit-section-forward
+  (kbd "{") 'magit-section-backward
+  (kbd "TAB") 'magit-section-toggle
+  (kbd "RET") 'magit-visit-thing
+  (kbd "q") 'magit-mode-bury-buffer)
 
 ;; Bindings
 (defun find-config ()
