@@ -178,6 +178,8 @@
   (kbd "<leader> .") 'find-file
   (kbd "<leader> f c") #'find-config)
 
+(evil-define-key 'normal 'global
+  (kbd "<leader> g") #'magit)
 
 (evil-define-key 'normal 'global  
   (kbd "<leader> e e") 'eval-last-sexp
