@@ -5,6 +5,14 @@
 
 (load-user-file "bootstrap-straight.el")
 
+(add-hook 'emacs-startup-hook
+	  (lambda ()
+	    (message "*** Emacs loaded in %s with %d garbage collections."
+		     (format "%.2f seconds"
+			     (float-time
+			      (time-subtract after-init-time before-init-time)))
+		     gcs-done)))
+
 ;; Theme and appearance
 (straight-use-package 'catppuccin-theme)
 (load-theme 'catppuccin t)
@@ -21,12 +29,20 @@
 	       `(font . ,font)))
 
 
+;; General settings
+(setq backup-directory-alist '(("." . "~/.backups")))
+
 ;; Evil (vim)
 (straight-use-package 'evil)
+(setq evil-vsplit-window-right t
+      evil-split-window-below t)
 (evil-mode 1)
 
 ;;; Set up the leader key
 (evil-set-leader 'normal (kbd "<SPC>"))
+
+(evil-define-key 'normal 'global
+  (kbd "<leader> q") 'save-buffers-kill-terminal)
 
 (evil-define-key 'normal 'global
   (kbd "<leader> x") 'execute-extended-command)
@@ -62,6 +78,12 @@
 ;; dired starts in normal mode even without explicitly stating so using `evil-set-initial-state'.
 (setq dired-kill-when-opening-new-dired-buffer t) 
 (require 'dired)
+
+;; launching dired
+(evil-define-key 'normal 'global
+  (kbd "<leader> d d") 'dired
+  (kbd "<leader> d j") 'dired-jump)
+
 (evil-define-key 'normal dired-mode-map
   "j" 'dired-next-line
   "k" 'dired-previous-line
@@ -116,8 +138,10 @@
 (straight-use-package 'vertico)
 (vertico-mode 1)
 (define-key vertico-map (kbd "<escape>") #'keyboard-escape-quit)
-(evil-define-key '(normal emacs) vertico-map
-  (kbd "DEL") #'vertico-directory-delete-char
+(require 'vertico-directory)
+(define-key vertico-map
+  (kbd "DEL") #'vertico-directory-delete-char)
+(define-key vertico-map
   (kbd "RET") #'vertico-directory-enter)
 
 ;;;; save history of minibuffer commands used in order to promote them next time.
@@ -152,7 +176,6 @@
 
 ;; Git
 (straight-use-package 'magit)
-;;;; TODO add vim bindings to this
 (evil-set-initial-state 'magit-status-mode 'normal)
 (evil-define-key 'normal magit-status-mode-map
   (kbd "q") 'magit-mode-bury-buffer
@@ -164,7 +187,9 @@
   (kbd "TAB") 'magit-section-toggle
   (kbd "RET") 'magit-visit-thing
   (kbd "i") 'magit-gitignore
-  (kbd "l") 'magit-log)
+  (kbd "l") 'magit-log
+  ;; delete
+  (kbd "d d") 'magit-discard)
 
 (evil-define-key '(normal visual) magit-status-mode-map
   (kbd "s") 'magit-stage
@@ -197,7 +222,7 @@
 
 ;;;; file commands
 (evil-define-key 'normal 'global
-  (kbd "<leader> .") 'find-file
+  (kbd "<leader> f f") 'find-file
   (kbd "<leader> f c") #'find-config)
 
 (evil-define-key 'normal 'global
@@ -223,11 +248,11 @@
 
 ;;;; Help (prefix 'h')
 (evil-define-key 'normal 'global
-  (kbd "<leader>h f") 'describe-function
-  (kbd "<leader>h v") 'describe-variable
-  (kbd "<leader>h m") 'describe-mode
-  (kbd "<leader>h i") 'info
-  (kbd "<leader>h k") 'describe-key)
+  (kbd "<leader> h f") 'describe-function
+  (kbd "<leader> h v") 'describe-variable
+  (kbd "<leader> h m") 'describe-mode
+  (kbd "<leader> h i") 'info
+  (kbd "<leader> h k") 'describe-key)
 
 ;;;; Shells
 (setq explicit-shell-file-name "/bin/zsh"
@@ -237,6 +262,8 @@
 
 ;;;; window navigation
 (evil-define-key 'normal 'global
+  (kbd "<leader> .") 'evil-window-split
+  (kbd "<leader> /") 'evil-window-vsplit
   (kbd "<leader> w w") 'other-window
   (kbd "<leader> w c") 'evil-window-delete
   (kbd "<leader> w v") 'evil-window-vsplit
@@ -268,13 +295,42 @@
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
 ;;; LSP setup
+;; Emacs 29 packages `eglot', so no need to install it.
+(add-hook 'eglot-managed-mode-hook
+	  (lambda ()
+	    (setq eldoc-documentation-strategy #'eldoc-documentation-compose)
+	    (setq eldoc-documentation-functions
+		  '(flymake-eldoc-function
+		    eglot-signature-eldoc-function
+		    eglot-hover-eldoc-function))))
+		  
 
 ;;; Lisps
 
 
 ;;; Terraform
+(straight-use-package 'terraform-mode)
 
-;;; PHP
+;;; Rust
+(straight-use-package 'rust-mode)
+
+
+;; Reading
+;;; Epub support
+(straight-use-package 'nov)
+(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+
+;; Icons
+(straight-use-package 'all-the-icons)
+;;; If icons aren't showing up, you may need to install the font.
+;;; If so, uncomment and execute the following line.
+;; (all-the-icons-install-fonts t)
+
+(straight-use-package 'all-the-icons-completion)
+(all-the-icons-completion-mode)
+(if (require 'marginalia nil nil)
+    (add-hook 'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
