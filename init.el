@@ -15,19 +15,40 @@
 
 ;; Theme and appearance
 (straight-use-package 'catppuccin-theme)
-(load-theme 'catppuccin t)
+;; (load-theme 'catppuccin t)
+(setq modus-themes-completions
+      '((matches . (extrabold underline))
+	(selection . (semibold italic))))
+(setq modus-themes-prompts '(bold))
+(setq modus-themes-bold-constructs t)
+(setq modus-themes-common-palette-overrides
+      modus-themes-preset-overrides-intense)
+(setq modus-themes-variable-pitch-ui nil)
+(setq modus-themes-italic-constructs t)
+(setq modus-themes-headings
+      '((1 . (variable-pitch 1.5))
+	(2 . (1.3))
+	(agenda-date . (1.3))
+	(agenda-structure . (variable-pitch light 1.8))
+	(t . (1.1))))
+
+(load-theme 'modus-vivendi t)
 
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 
+
+;;; turn off the bell!
+(setq ring-bell-function 'ignore)
+
+;;; fonts
 (let ((font "FiraCode Nerd Font")
       (size 160))
   (set-face-attribute 'default nil :font font :height size)
   (set-frame-font font nil t)
   (add-to-list 'default-frame-alist
 	       `(font . ,font)))
-
 
 ;; General settings
 (setq backup-directory-alist '(("." . "~/.backups")))
@@ -41,18 +62,69 @@
 ;;; Set up the leader key
 (evil-set-leader 'normal (kbd "<SPC>"))
 
-(evil-define-key 'normal 'global
+(evil-define-key '(normal motion) 'global
+  (kbd "<leader> ;") #'eval-expression)
+
+(evil-define-key '(normal motion) 'global
   (kbd "<leader> q") 'save-buffers-kill-terminal)
 
-(evil-define-key 'normal 'global
+(evil-define-key '(normal motion) 'global
   (kbd "<leader> x") 'execute-extended-command)
 
 (evil-define-key '(insert emacs) 'global
   (kbd "s-x") #'execute-extended-command)
 
+
+;; Org
+;;; Packages
+(straight-use-package 'org-bullets)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+(setq org-hide-emphasis-markers t)
+;;; add org tempo as it includes (among other things), the '<s' expansion feature
+(require 'org-tempo)
+(evil-define-key 'normal org-mode-map
+  (kbd "<tab>") 'org-cycle
+  (kbd "s-j") 'org-metadown
+  (kbd "s-k") 'org-metaup
+  (kbd "> >") 'org-shiftmetaright
+  (kbd "< <") 'org-shiftmetaleft)
+
+
+;; Tabs
+(setq tab-bar-show 1)
+(evil-define-key '(normal motion) 'global
+  (kbd "<leader> t t") #'tab-switch
+  (kbd "<leader> t n") #'tab-new
+  (kbd "<leader> t c") #'tab-close
+  (kbd "<leader> t j") #'tab-next
+  (kbd "<leader> t k") #'tab-previous
+  (kbd "<leader> t f") #'find-file-other-tab
+  (kbd "<leader> t b") #'switch-to-buffer-other-tab
+  (kbd "<leader> t r") #'tab-rename
+  (kbd "<leader> t d") #'dired-other-tab)
+
+;; better help display
+(straight-use-package 'helpful)
+;;; bind to helpful commands
+(evil-define-key '(normal motion) 'global
+  (kbd "<leader> h i") #'info
+  (kbd "<leader> h v") #'helpful-variable
+  (kbd "<leader> h f") #'helpful-function
+  (kbd "<leader> h k") #'helpful-key
+  (kbd "<leader> h m") #'describe-mode
+  (kbd "<leader> h r") #'info-display-manual
+  (kbd "<leader> h M") #'info-emacs-manual)
+  
+(evil-define-key '(normal motion) helpful-mode-map
+  (kbd "q") #'quit-window)
+
+(evil-define-key '(normal motion) help-mode-map
+  (kbd "q") #'quit-window)
+  
 ;;; Evil-ify modes
 ;;;; Info mode
 (evil-set-initial-state 'Info-mode 'normal)
+
 (evil-define-key '(normal motion) Info-mode-map
   (kbd "<tab>") 'Info-next-reference
   (kbd "S-<tab>") 'Info-prev-reference
@@ -63,10 +135,10 @@
   "i" 'Info-index
   "a" 'info-apropos
   "q" 'quit-window
-
+  
   [mouse-1] 'Info-mouse-follow-nearest-node
   [follow-link] 'mouse-face
-
+  
   ;; goto
   "gm" 'Info-menu
   "gt" 'Info-top-node
@@ -79,16 +151,29 @@
 (setq dired-kill-when-opening-new-dired-buffer t) 
 (require 'dired)
 
+(defun dired-first-file ()
+  (interactive)
+  (beginning-of-buffer)
+  (dired-next-line 3))
+
+(defun dired-last-file ()
+  (interactive)
+  (end-of-buffer)
+  (dired-next-line -1))
+
 ;; launching dired
-(evil-define-key 'normal 'global
+(evil-define-key '(normal motion) 'global
   (kbd "<leader> d d") 'dired
   (kbd "<leader> d j") 'dired-jump)
 
-(evil-define-key 'normal dired-mode-map
-  "j" 'dired-next-line
-  "k" 'dired-previous-line
-  "h" 'dired-up-directory
-  "l" 'dired-find-file
+(evil-define-key '(normal motion) dired-mode-map
+  (kbd "j") 'dired-next-line
+  (kbd "k") 'dired-previous-line
+  (kbd "h") 'dired-up-directory
+  (kbd "l") 'dired-find-file
+  (kbd "s") 'eshell
+  (kbd "g g") 'dired-first-file
+  (kbd "G") 'dired-last-file
   (kbd "<left>") 'dired-up-directory
   (kbd "<right>") 'dired-find-file
   (kbd "<up>") 'dired-previous-line
@@ -96,7 +181,8 @@
 
 ;;;; ibuffer
 (evil-set-initial-state 'ibuffer-mode 'normal)
-(evil-define-key 'normal ibuffer-mode-map
+(evil-define-key '(normal motion) ibuffer-mode-map
+  (kbd "<leader> x") 'execute-extended-command
   ;; navigation
   (kbd "{") 'ibuffer-backwards-next-marked
   (kbd "}") 'ibuffer-forward-next-marked
@@ -122,13 +208,20 @@
 
   ;; immediate actions
   (kbd "A") 'ibuffer-do-view
-  (kbd "D") 'ibuffer-do-delete)
+  (kbd "D") 'ibuffer-do-delete
+  (kbd "K") 'ibuffer-do-kill-lines)
 
 
 ;; unbind space from running `dired-next-line' in order to free it up for space-prefixed bindings.
 (define-key dired-mode-map (kbd "SPC") nil)
 
 ;; Completion
+;;; Project aware commands ('p' prefix)
+(evil-define-key 'normal 'global
+  (kbd "<leader> p f") 'project-find-file
+  (kbd "<leader> p e") 'project-eshell)
+
+
 ;;; minibuffer
 (setq enable-recursive-minibuffers t)
 ;; TODO: consider aliasing `yes-or-no-p' to `y-or-n-p'.
@@ -170,14 +263,14 @@
 (straight-use-package 'embark)
 (setq prefix-help-command #'embark-prefix-help-command)
 (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-(evil-define-key '(normal visual insert emacs) 'global
+(evil-define-key '(normal motion visual insert emacs) 'global
   (kbd "s-<return>") 'embark-dwim
   (kbd "C-<return>") 'embark-act)
 
 ;; Git
 (straight-use-package 'magit)
 (evil-set-initial-state 'magit-status-mode 'normal)
-(evil-define-key 'normal magit-status-mode-map
+(evil-define-key '(normal motion) magit-status-mode-map
   (kbd "q") 'magit-mode-bury-buffer
   (kbd "c") 'magit-commit
   (kbd "j") 'magit-next-line
@@ -196,7 +289,7 @@
   (kbd "u") 'magit-unstage)
 
 (evil-set-initial-state 'magit-log-mode 'normal)
-(evil-define-key 'normal magit-log-mode-map
+(evil-define-key '(normal motion) magit-log-mode-map
   (kbd "q") 'magit-log-bury-buffer
   (kbd "j") 'magit-next-line
   (kbd "k") 'magit-previous-line
@@ -205,7 +298,7 @@
   (kbd "RET") 'magit-show-commit)
 
 (evil-set-initial-state 'magit-revision-mode 'normal)
-(evil-define-key 'normal magit-revision-mode-map
+(evil-define-key '(normal motion) magit-revision-mode-map
   (kbd "j") 'magit-next-line
   (kbd "k") 'magit-previous-line
   (kbd "}") 'magit-section-forward
@@ -221,38 +314,36 @@
   (find-file (concat user-emacs-directory "init.el")))
 
 ;;;; file commands
-(evil-define-key 'normal 'global
+(evil-define-key '(normal motion) 'global
   (kbd "<leader> f f") 'find-file
   (kbd "<leader> f c") #'find-config)
 
-(evil-define-key 'normal 'global
+(evil-define-key '(normal motion) 'global
   (kbd "<leader> g") #'magit)
 
-(evil-define-key 'normal 'global  
+(evil-define-key '(normal motion) 'global  
   (kbd "<leader> e e") 'eval-last-sexp
   (kbd "<leader> e d") 'eval-defun)
 
 ;; TODO: this doesn't currently work.
-(evil-define-key 'visual 'global
+(evil-define-key '(visual motion) 'global
   (kbd "<leader> e e") 'eval-region)
 
+;; Seems like this is already defined in `simple.el'
+;; (defun kill-current-buffer ()
+  ;; "Kill the current buffer using `kill-buffer'."
+  ;; (interactive)
+  ;; (kill-buffer t))
 
 ;;;; Buffer wrangling
- (evil-define-key 'normal 'global
+ (evil-define-key '(normal motion) 'global
   (kbd "<leader> b b") 'switch-to-buffer
   (kbd "<leader> b n") 'next-buffer
   (kbd "<leader> b p") 'previous-buffer
   (kbd "<leader> b s") 'save-buffer
   (kbd "<leader> b i") 'ibuffer
-  (kbd "<leader> b d") 'evil-delete-buffer)
-
-;;;; Help (prefix 'h')
-(evil-define-key 'normal 'global
-  (kbd "<leader> h f") 'describe-function
-  (kbd "<leader> h v") 'describe-variable
-  (kbd "<leader> h m") 'describe-mode
-  (kbd "<leader> h i") 'info
-  (kbd "<leader> h k") 'describe-key)
+  (kbd "<leader> b d") 'evil-delete-buffer
+  (kbd "<leader> b k") 'kill-current-buffer)
 
 ;;;; Shells
 (setq explicit-shell-file-name "/bin/zsh"
@@ -261,7 +352,11 @@
   (kbd "<leader>s e") 'eshell)
 
 ;;;; window navigation
-(evil-define-key 'normal 'global
+(evil-define-key '(normal motion) 'global
+  ;; short command for most common operation. might need
+  ;; to give it up if I deem the 'o' prefix handy for a
+  ;; group of commands
+  (kbd "<leader> o") 'other-window
   (kbd "<leader> .") 'evil-window-split
   (kbd "<leader> /") 'evil-window-vsplit
   (kbd "<leader> w w") 'other-window
@@ -284,9 +379,38 @@
 	       (slot . 0)
 	       (window-height . 15)))
 
+(add-to-list 'display-buffer-alist
+	     '("Calendar"
+	       (display-buffer-below-selected)
+	       (window-height . 15)))
+
 ;; Eshell
 (straight-use-package 'eshell-syntax-highlighting)
 (eshell-syntax-highlighting-global-mode +1)
+(require 'eshell)
+(require 'em-smart)
+(setq eshell-where-to-jump 'begin)
+(setq eshell-review-quick-commands nil)
+(setq eshell-smart-space-goes-to-end t)
+
+
+;; Calendar
+;;; enable appointment reminders
+(appt-activate 1)
+(evil-set-initial-state 'calendar-mode 'normal)
+(evil-define-key 'normal calendar-mode-map
+  (kbd "l") 'calendar-forward-day
+  (kbd "h") 'calendar-backward-day
+  (kbd "k") 'calendar-backward-week
+  (kbd "j") 'calendar-forward-week
+  (kbd "q") 'calendar-exit
+  (kbd ".") 'calendar-goto-today
+  (kbd "d d") 'diary-view-entries
+  (kbd "d a") 'diary-insert-entry)
+
+;; Diary
+(evil-define-key 'normal diary-fancy-display-mode-map
+  (kbd "q") 'quit-window)
 
 
 ;; Programming modes
@@ -307,6 +431,11 @@
 
 ;;; Lisps
 
+;;; Yaml
+(straight-use-package 'yaml-mode)
+
+;;; Docker
+(straight-use-package 'dockerfile-mode)
 
 ;;; Terraform
 (straight-use-package 'terraform-mode)
@@ -314,6 +443,8 @@
 ;;; Rust
 (straight-use-package 'rust-mode)
 
+;;; PHP
+(straight-use-package 'php-mode)
 
 ;; Reading
 ;;; Epub support
@@ -330,6 +461,14 @@
 (all-the-icons-completion-mode)
 (if (require 'marginalia nil nil)
     (add-hook 'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup))
+
+;; miscellanious functions
+(defun masteringemacs ()
+  "Open the masteringemacs epub manual."
+  (interactive)
+  ;; ensure the nov package is installed
+  (require 'nov)
+  (find-file "~/Dropbox/Emacs/mastering-emacs-v4.epub"))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
