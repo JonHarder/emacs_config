@@ -95,6 +95,12 @@
 			   (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "·"))))))
 ;;; add org tempo as it includes (among other things), the '<s' expansion feature
 (require 'org-tempo)
+
+;;; Generate table of contents
+(straight-use-package 'toc-org)
+(add-hook 'org-mode-hook 'toc-org-mode)
+
+
 (evil-define-key 'normal org-mode-map
   (kbd "<tab>") 'org-cycle
   (kbd "s-j") 'org-metadown
