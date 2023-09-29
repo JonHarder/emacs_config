@@ -413,6 +413,11 @@
 (setq eshell-smart-space-goes-to-end t)
 
 
+;; Http
+(straight-use-package 'restclient)
+(add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
+
+
 ;; Calendar
 ;;; enable appointment reminders
 (appt-activate 1)
