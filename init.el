@@ -16,6 +16,7 @@
 ;; Theme and appearance
 (straight-use-package 'catppuccin-theme)
 ;; (load-theme 'catppuccin t)
+(require-theme 'modus-themes)
 (setq modus-themes-completions
       '((matches . (extrabold underline))
 	(selection . (semibold italic))))
@@ -52,6 +53,14 @@
 
 ;; General settings
 (setq backup-directory-alist '(("." . "~/.backups")))
+;; GPG
+;;; There's an issue with epg (gpg) encrypting files. It seems to hang on save.
+;;; This resolves the issue
+(fset 'epg-wait-for-status 'ignore)
+;; I don't think this is required
+;; (setenv "GPG_AGENT_INFO" nil)
+;; but this definitely is
+(setq epg-pinentry-mode 'loopback)
 
 ;; Evil (vim)
 (straight-use-package 'evil)
@@ -68,10 +77,10 @@
 (evil-define-key '(normal motion) 'global
   (kbd "<leader> q") 'save-buffers-kill-terminal)
 
-(evil-define-key '(normal motion) 'global
+(evil-define-key '(normal motion visual) 'global
   (kbd "<leader> x") 'execute-extended-command)
 
-(evil-define-key '(insert emacs) 'global
+(evil-define-key '(insert emacs visual) 'global
   (kbd "s-x") #'execute-extended-command)
 
 
@@ -80,6 +89,10 @@
 (straight-use-package 'org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 (setq org-hide-emphasis-markers t)
+;;; better list bullets
+(font-lock-add-keywords 'org-mode
+			'(("^ +\\([-*]\\) "
+			   (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "·"))))))
 ;;; add org tempo as it includes (among other things), the '<s' expansion feature
 (require 'org-tempo)
 (evil-define-key 'normal org-mode-map
