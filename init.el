@@ -33,6 +33,7 @@
 	(agenda-structure . (variable-pitch light 1.8))
 	(t . (1.1))))
 
+;; (load-theme 'modus-operandi t)
 (load-theme 'modus-vivendi t)
 
 (menu-bar-mode -1)
