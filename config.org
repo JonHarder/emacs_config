@@ -1,0 +1,250 @@
+* Table of contents :TOC:
+- [[#performance-monitoring][Performance monitoring]]
+- [[#set-up-straightel-package-management][Set up straight.el (package management)]]
+- [[#appearance][Appearance]]
+  - [[#color-theme][Color theme]]
+  - [[#tweak-display-of-ui-elements][Tweak display of UI elements]]
+  - [[#bells-are-evil][Bells are evil]]
+  - [[#time-display][Time display]]
+  - [[#font][Font]]
+- [[#backups][Backups]]
+- [[#gpg-egp][GPG (egp)]]
+  - [[#disable-waiting-for-status][Disable waiting for status]]
+  - [[#pin-entry][PIN entry]]
+- [[#evil-vim-bindings][Evil (vim) bindings]]
+  - [[#install-the-package-and-enable-it][Install the package and enable it]]
+  - [[#leader-key][Leader key]]
+  - [[#bindings][Bindings]]
+
+* Performance monitoring
+  It's helpful to track how long Emacs takes to load up. This normally
+  isn't the most critical metric to track as I usually run emacs with
+  ~emacs --daemon~, and open new emacs windows with ~emacsclient~, but
+  helpful nonetheless.
+
+  #+begin_src emacs-lisp
+    (add-hook 'emacs-startup-hook
+	      (lambda ()
+		(message "*** Emacs loaded in %s with %d garbage collections."
+			 (format "%.2f seconds"
+				 (float-time
+				  (time-subtract after-init-time before-init-time)))
+			 gcs-done)))
+  #+end_src
+
+* Set up straight.el (package management)
+
+#+begin_src emacs-lisp
+(setq straight-repository-branch "develop")
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-verision 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+	(url-retrieve-synchronously
+	 "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+	 'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
+
+* Appearance
+** Color theme
+   The modus theme set is the most complete and polished emacs color theme I've
+   encountered. It's also WCAG 2 compliant meaning it will always have high color
+   contrast between UI elements, making it one of the easiest themes on the eyes
+   in any lighting situation.
+
+*** Settings
+    #+begin_src emacs-lisp
+      (require-theme 'modus-themes)
+      (setq modus-themes-completions
+	    '((matches . (extrabold underline))
+	      (selection . (semibold italic))))
+      (setq modus-themes-prompts '(bold))
+      (setq modus-themes-bold-constructs t)
+      (setq modus-themes-common-palette-overrides
+	    modus-themes-preset-overrides-intense)
+      (setq modus-themes-variable-pitch-ui nil)
+      (setq modus-themes-italic-constructs t)
+      (setq modus-themes-org-blocks 'tinted-background)
+      (setq modus-themes-headings
+	    '((1 . (variable-pitch 1.5))
+	      (2 . (1.3))
+	      (agenda-date . (1.3))
+	      (agenda-structure . (variable-pitch light 1.8))
+	      (t . (1.1))))
+
+    #+end_src
+
+*** Load theme
+    #+begin_src emacs-lisp
+      (load-theme 'modus-operandi t)
+      ;; (load-theme 'modus-vivendi t)
+   #+end_src
+
+** Tweak display of UI elements
+*** Menu bar mode
+
+   The menu bar is the list of contextual dropdown options in the top of the
+   application (or in the universal top bar on macs).
+
+   I'm all for getting rid of UI clutter, especially if it's unused, but there
+   are a lot of features in emacs... Having contextual help aids discoverability,
+   and so it stays on.
+   
+   #+begin_src emacs-lisp
+     (menu-bar-mode 1)
+   #+end_src
+
+*** Scroll bar mode
+   #+begin_src emacs-lisp
+     (scroll-bar-mode -1)
+   #+end_src
+*** Tool bar mode
+   #+begin_src emacs-lisp
+     (tool-bar-mode -1)
+   #+end_src
+
+** Bells are evil
+   #+begin_src emacs-lisp
+     (setq ring-bell-function 'ignore)
+   #+end_src
+** Time display
+
+*** Format
+    I like 24 hour time; one time being ambiguous is unnecessarily cumbersome.
+
+    #+begin_src emacs-lisp
+      (setq display-time-24hr-format t)
+    #+end_src
+
+*** Add the time to the mode line
+
+   #+begin_src emacs-lisp
+     (display-time)
+   #+end_src
+
+** Font
+
+   I use FiraCode patched with the Nerd icons
+
+   #+begin_src emacs-lisp
+     (let ((font "FiraCode Nerd Font")
+	   (size 160))
+       (set-face-attribute 'default nil :font font :height size)
+       (set-frame-font font nil t)
+       (add-to-list 'default-frame-alist
+		    `(font . ,font)))
+   #+end_src
+
+* Backups
+
+  Emacs helpfully creates local backups of any files you're editing so that
+  if something happens to your session before saving the file, you'll have
+  a backup of the local changes.
+
+  It *un*-helpfully defaults to placing them in the same directory as the file
+  you are editing. This clutters things up immensely, particularily when you
+  are working in a version-controlled project and have to tell your VC tool
+  to ignore them.
+
+  Much better to just place them in a dedicated directory and forget about them.
+  Emacs will still save the day if something happens, but you don't have to
+  worry about it.
+
+  #+begin_src emacs-lisp
+    (setq backup-directory-alist '(("." . "~/.backups")))
+  #+end_src
+
+* GPG (egp)
+
+  GPG allows you to easily encrypt/decrypt files with either symmetric
+  (shared key) or asymetric (private key) encryption.
+
+  Emacs hooks into this seemlessly by automatically decrypting encrypted
+  files automatically when opening them using any loaded encyption keys
+  you have on the system.
+
+** Disable waiting for status
+
+  There is an outstanding bug in epg where waiting for the enryption status
+  will hang, which blocks the whole editor. We can disable this for now.
+
+  #+begin_src emacs-lisp
+    (fset 'epg-wait-for-status 'ignore)
+  #+end_src
+
+** PIN entry
+
+  PIN entry is used to authorize a gpg key for use. By default emacs will
+  reach out to an external proccess to prompt for the PIN. But this is
+  emacs, let's make emacs do it.
+
+  #+begin_src emacs-lisp
+    (setq epg-pinentry-mode 'loopback)
+  #+end_src
+
+* Evil (vim) bindings
+
+  Evil mode is the backbone of this configuration. Coming from years
+  of vim use, modal editing is burned into my brain stem.
+
+  Fortunately, emacs has some of the best vim emulation of any editor
+  or environment around in the way of ~evil-mode~.
+
+** Install the package and enable it
+
+  #+begin_src emacs-lisp
+    (straight-use-package 'evil)
+    (setq evil-vsplit-window-right t)
+    (setq evil-split-window-below t)
+    (evil-mode 1)
+  #+end_src
+
+** Leader key
+
+  The leader key is a super handy global prefix for keybindings.
+  It's used in this configuration as the entrypoint for most bindings.
+
+  After entering the leader key =SPC=, bindings are further subdivided
+  by the logical operations or object those bindings act on.
+
+  | _binding_ | _action_                           |
+  |---------+----------------------------------|
+  | SPC a   | application launcher             |
+  | SPC b   | buffer actions                   |
+  | SPC c   | config actions                   |
+  | SPC d   | dired actions                    |
+  | SPC e   | evaluation actions               |
+  | SPC f   | file based actions               |
+  | SPC g   | magit                            |
+  | SPC h   | help actions                     |
+  | SPC m   | [reserved] mode specific actions |
+  | SPC o   | org actions                      |
+  | SPC t   | tab actions                      |
+  | SPC w   | window based actions             |
+
+  #+begin_src emacs-lisp
+    (evil-set-leader 'normal (kbd "<SPC>"))
+  #+end_src
+
+** Bindings
+
+  First we set up short keybinds for the most common and important
+  actions.
+
+  #+begin_src emacs-lisp
+    (evil-define-key '(normal motion) 'global
+      (kbd "<leader> ;") #'eval-expression
+      (kbd "<leader> q") #'save-buffers-kill-terminal)
+
+    (evil-define-key '(normal motion visual) 'global
+      (kbd "<leader> x") 'execute-extended-command)
+
+    (evil-define-key '(insert emacs visual) 'global
+      (kbd "s-x") #'execute-extended-command)
+  #+end_src
