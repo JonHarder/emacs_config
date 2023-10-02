@@ -26,6 +26,7 @@
       modus-themes-preset-overrides-intense)
 (setq modus-themes-variable-pitch-ui nil)
 (setq modus-themes-italic-constructs t)
+(setq modus-themes-org-blocks 'tinted-background)
 (setq modus-themes-headings
       '((1 . (variable-pitch 1.5))
 	(2 . (1.3))
@@ -33,12 +34,14 @@
 	(agenda-structure . (variable-pitch light 1.8))
 	(t . (1.1))))
 
-;; (load-theme 'modus-operandi t)
-(load-theme 'modus-vivendi t)
+(load-theme 'modus-operandi t)
+;; (load-theme 'modus-vivendi t)
 
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
+(setq display-time-24hr-format t)
+(display-time)
 
 
 ;;; turn off the bell!
@@ -89,17 +92,30 @@
 ;;; Packages
 (straight-use-package 'org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+;;; add org tempo as it includes (among other things), the '<s' expansion feature
+(require 'org-tempo)
 (setq org-hide-emphasis-markers t)
 ;;; better list bullets
 (font-lock-add-keywords 'org-mode
 			'(("^ +\\([-*]\\) "
 			   (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "·"))))))
-;;; add org tempo as it includes (among other things), the '<s' expansion feature
-(require 'org-tempo)
+
+(setq org-directory "~/Dropbox")
+(setq org-default-notes-file (concat org-directory "/index.org"))
+(add-to-list 'org-agenda-files org-default-notes-file)
 
 ;;; Generate table of contents
 (straight-use-package 'toc-org)
 (add-hook 'org-mode-hook 'toc-org-mode)
+
+;;; Org specific global bindings
+(evil-define-key 'normal 'global
+  (kbd "<leader> o c") #'org-capture)
+
+;;; Org Capture
+(setq org-capture-templates
+      '(("t" "Todo" entry (file+headline "~/Dropbox/Work/index.org" "Tasks")
+	 "* %?\n %i\n %a")))
 
 
 (evil-define-key 'normal org-mode-map
@@ -376,7 +392,6 @@
   ;; short command for most common operation. might need
   ;; to give it up if I deem the 'o' prefix handy for a
   ;; group of commands
-  (kbd "<leader> o") 'other-window
   (kbd "<leader> .") 'evil-window-split
   (kbd "<leader> /") 'evil-window-vsplit
   (kbd "<leader> w w") 'other-window
@@ -403,6 +418,16 @@
 	     '("Calendar"
 	       (display-buffer-below-selected)
 	       (window-height . 15)))
+
+;; "App" Launcher
+(evil-define-key 'normal 'global
+  (kbd "<leader> a c") #'calendar
+  (kbd "<leader> a a") #'org-agenda)
+
+;; Toggles
+(evil-define-key 'normal 'global
+  (kbd "<leader> T t") #'modus-themes-toggle
+  (kbd "<leader> T n") #'display-line-numbers-mode)
 
 ;; Eshell
 (straight-use-package 'eshell-syntax-highlighting)
@@ -431,7 +456,7 @@
   (kbd "q") 'calendar-exit
   (kbd ".") 'calendar-goto-today
   (kbd "d d") 'diary-view-entries
-  (kbd "d a") 'diary-insert-entry)
+  (kbd "d i") 'diary-insert-entry)
 
 ;; Diary
 (evil-define-key 'normal diary-fancy-display-mode-map
