@@ -1,3 +1,7 @@
+#+TITLE: Literate Emacs Config
+#+AUTHOR: Jon Harder
+#+STARTUP: showeverything
+#+OPTIONS: toc:2
 * Table of contents :TOC:
 - [[#performance-monitoring][Performance monitoring]]
 - [[#set-up-straightel-package-management][Set up straight.el (package management)]]
@@ -7,14 +11,28 @@
   - [[#bells-are-evil][Bells are evil]]
   - [[#time-display][Time display]]
   - [[#font][Font]]
+  - [[#tabs][Tabs]]
 - [[#backups][Backups]]
 - [[#gpg-egp][GPG (egp)]]
   - [[#disable-waiting-for-status][Disable waiting for status]]
   - [[#pin-entry][PIN entry]]
-- [[#evil-vim-bindings][Evil (vim) bindings]]
+- [[#evil-vim][Evil (vim)]]
   - [[#install-the-package-and-enable-it][Install the package and enable it]]
+  - [[#starting-state-for-major-modes][Starting state for major modes]]
   - [[#leader-key][Leader key]]
-  - [[#bindings][Bindings]]
+- [[#bindings][Bindings]]
+  - [[#global-bindings][Global bindings]]
+  - [[#mode-specific-bindings][Mode specific bindings]]
+- [[#org][Org]]
+  - [[#modules][modules]]
+  - [[#settings][Settings]]
+  - [[#org-capture][Org capture]]
+  - [[#visual-enhancements][Visual enhancements]]
+  - [[#babel][Babel]]
+  - [[#toc-org][toc-org]]
+- [[#dired][Dired]]
+  - [[#settings-1][Settings]]
+  - [[#helper-functions][Helper functions]]
 
 * Performance monitoring
   It's helpful to track how long Emacs takes to load up. This normally
@@ -70,7 +88,7 @@
 	    modus-themes-preset-overrides-intense)
       (setq modus-themes-variable-pitch-ui nil)
       (setq modus-themes-italic-constructs t)
-      (setq modus-themes-org-blocks 'tinted-background)
+      (setq modus-themes-org-blocks 'gray-background)
       (setq modus-themes-headings
 	    '((1 . (variable-pitch 1.5))
 	      (2 . (1.3))
@@ -82,8 +100,8 @@
 
 *** Load theme
     #+begin_src emacs-lisp
-      (load-theme 'modus-operandi t)
-      ;; (load-theme 'modus-vivendi t)
+      ;; (load-theme 'modus-operandi t)
+      (load-theme 'modus-vivendi t)
    #+end_src
 
 ** Tweak display of UI elements
@@ -141,6 +159,15 @@
 		    `(font . ,font)))
    #+end_src
 
+** Tabs
+   Tabs are a useful workspace organization concept. You can have discrete window/buffer arrangements per tab,
+   allowing you to switch between them at will. They are pretty flexible so you could use them for keeping
+   track of different projects. Or you could have different window configuations for the same set of buffers
+   on different tabs to help with different types of work within the same project.
+
+   #+begin_src emacs-lisp
+     (setq tab-bar-show 1)
+   #+end_src
 * Backups
 
   Emacs helpfully creates local backups of any files you're editing so that
@@ -188,7 +215,7 @@
     (setq epg-pinentry-mode 'loopback)
   #+end_src
 
-* Evil (vim) bindings
+* Evil (vim)
 
   Evil mode is the backbone of this configuration. Coming from years
   of vim use, modal editing is burned into my brain stem.
@@ -204,6 +231,21 @@
     (setq evil-split-window-below t)
     (evil-mode 1)
   #+end_src
+
+
+** Starting state for major modes
+
+   Sometimes I want to have some evil state other than =normal= for a particular
+   major mode, or the mode might not start in =normal= mode for some reason.
+   Regardless, configure thes modes with the desired initial state.
+
+   #+begin_src emacs-lisp
+     (defvar my-normal-modes '(Info-mode ibuffer-mode)
+       "Modes for which evil should begin in normal mode.")
+
+     (dolist (mode my-normal-modes)
+	 (evil-set-initial-state mode 'normal))
+   #+end_src
 
 ** Leader key
 
@@ -232,7 +274,7 @@
     (evil-set-leader 'normal (kbd "<SPC>"))
   #+end_src
 
-** Bindings
+* Bindings
 
   First we set up short keybinds for the most common and important
   actions.
@@ -248,3 +290,346 @@
     (evil-define-key '(insert emacs visual) 'global
       (kbd "s-x") #'execute-extended-command)
   #+end_src
+
+  Next we'll define keys that operate from the global keymap, meaning they are
+  accessible anywhere, from any mode.
+
+** Global bindings
+
+   First, install a nicer help viewer.
+   
+   #+begin_src emacs-lisp
+     (straight-use-package 'helpful)
+   #+end_src
+
+   And now for the bindings.
+   
+   #+begin_src emacs-lisp
+     (evil-define-key '(normal motion) 'global
+       ;; imenu
+       (kbd "<leader> i") #'imenu
+       ;; org
+       (kbd "<leader> o c") #'org-capture
+       ;; tab commands
+       (kbd "<leader> t t") #'tab-switch
+       (kbd "<leader> t n") #'tab-new
+       (kbd "<leader> t c") #'tab-close
+       (kbd "<leader> t j") #'tab-next
+       (kbd "<leader> t k") #'tab-previous
+       (kbd "<leader> t f") #'find-file-other-tab
+       (kbd "<leader> t b") #'switch-to-buffer-other-tab
+       (kbd "<leader> t r") #'tab-rename
+       (kbd "<leader> t d") #'dired-other-tab
+       ;; help(ful) commands
+       (kbd "<leader> h i") #'info
+       (kbd "<leader> h v") #'helpful-variable
+       (kbd "<leader> h f") #'helpful-function
+       (kbd "<leader> h k") #'helpful-key
+       (kbd "<leader> h m") #'describe-mode
+       (kbd "<leader> h r") #'info-display-manual
+       (kbd "<leader> h M") #'info-emacs-manual
+       ;; dired
+       (kbd "<leader> d d") 'dired
+       (kbd "<leader> d j") 'dired-jump)
+   #+end_src
+
+
+** Mode specific bindings
+
+*** Org
+     #+begin_src emacs-lisp
+       (evil-define-key 'normal org-mode-map
+         (kbd "<tab>") 'org-cycle
+         (kbd "s-j") 'org-metadown
+         (kbd "s-k") 'org-metaup
+         (kbd "> >") 'org-shiftmetaright
+         (kbd "< <") 'org-shiftmetaleft)
+     #+end_src
+
+*** Help(ful)
+
+    #+begin_src emacs-lisp
+    (evil-define-key '(normal motion) helpful-mode-map
+      (kbd "q") #'quit-window)
+    
+    (evil-define-key '(normal motion) help-mode-map
+      (kbd "q") #'quit-window)
+    #+end_src
+
+*** Info
+
+    #+begin_src emacs-lisp
+      (evil-define-key '(normal motion) Info-mode-map
+	(kbd "<tab>") 'Info-next-reference
+	(kbd "S-<tab>") 'Info-prev-reference
+	(kbd "RET") 'Info-follow-nearest-node
+	(kbd "d") 'Info-directory
+	(kbd "u") 'Info-up
+	(kbd "s") 'Info-search
+	(kbd "i") 'Info-index
+	(kbd "a") 'info-apropos
+	(kbd "q") 'quit-window
+
+        (kbd "y y") 'Info-copy-current-node-name
+
+	[mouse-1] 'Info-mouse-follow-nearest-node
+	[follow-link] 'mouse-face
+	;; goto
+	(kbd "g m") 'Info-menu
+	(kbd "g t") 'Info-top-node
+	(kbd "g T") 'Info-toc
+	(kbd "g j") 'Info-next
+	(kbd "g k") 'Info-prev)
+    #+end_src
+
+*** Dired
+
+     I unbind space from running `dired-next-line' in order to free it up
+     for space-prefixed bindings.
+
+     #+begin_src emacs-lisp
+       (define-key dired-mode-map (kbd "SPC") nil)
+     #+end_src
+
+    #+begin_src emacs-lisp
+      (evil-define-key '(normal motion) dired-mode-map
+	(kbd "j") 'dired-next-line
+	(kbd "k") 'dired-previous-line
+	(kbd "h") 'dired-up-directory
+	(kbd "l") 'dired-find-file
+	(kbd "s") 'eshell
+	(kbd "g g") 'dired-first-file
+	(kbd "G") 'dired-last-file
+	(kbd "<left>") 'dired-up-directory
+	(kbd "<right>") 'dired-find-file
+	(kbd "<up>") 'dired-previous-line
+	(kbd "<down>") 'dired-next-line)
+    #+end_src
+
+*** Ibuffer
+
+     ibuffer is an interactive buffer viewer which allows for searching, filtering
+     and acting on all of the open buffers in your session.
+
+     #+begin_src emacs-lisp
+       (evil-define-key '(normal motion) ibuffer-mode-map
+	 (kbd "<leader> x") 'execute-extended-command
+	 ;; navigation
+	 (kbd "{") 'ibuffer-backwards-next-marked
+	 (kbd "}") 'ibuffer-forward-next-marked
+
+	 ;; mark commands
+	 (kbd "J") 'ibuffer-jump-to-buffer
+	 (kbd "m") 'ibuffer-mark-forward
+	 (kbd "~") 'ibuffer-toggle-marks
+	 (kbd "u") 'ibuffer-unmark-forward
+	 (kbd "DEL") 'ibuffer-unmark-backward
+	 (kbd "* *") 'ibuffer-mark-special-buffers
+	 (kbd "U") 'ibuffer-unmark-all-marks
+	 (kbd "* m") 'ibuffer-mark-by-mode
+	 (kbd "* M") 'ibuffer-mark-modified-buffers
+	 (kbd "* r") 'ibuffer-mark-read-only-buffers
+	 (kbd "* /") 'ibuffer-mark-dired-buffers
+	 (kbd "* h") 'ibuffer-mark-help-buffers
+	 (kbd "d") 'ibuffer-mark-for-delete
+
+	 ;; actions
+	 (kbd "x") 'ibuffer-do-kill-on-deletion-marks
+	 (kbd "gr") 'ibuffer-update
+
+	 ;; immediate actions
+	 (kbd "A") 'ibuffer-do-view
+	 (kbd "D") 'ibuffer-do-delete
+	 (kbd "K") 'ibuffer-do-kill-lines)
+     #+end_src
+
+
+* Org
+
+  What is org mode? What /isn't/ org mode? Built on top of emacs' outline-mode, org mode
+  is a best in class note taking format (think of markdown plus all the half-supported,
+  poorly documented extras, but all baked in and then some) It can make headings, lists,
+  emphasize text, store links to other headings in the same or different files and so
+  much more.
+
+  In addition to note taking, it handles thinks like task tracking, scheduling, effortless
+  ascii table editing, embedded runnable code snippets (think Jupyter notebooks).
+
+  In fact, this emacs configuration is written in org mode, and the embedded emacs lisp
+  is extracted and ran to formulate the actual config.
+
+** modules
+   As if org wasn't useful enough as it was, it also ships with a bunch of
+   additional modules that add additional features. Check it out by looking
+   at the customize-option for [[elisp:(customize-option 'org-modules)][org-modules]]. One useful one added here is
+   the ~man~ module, which provides support for linking to man pages (opened
+   in emacs' built in man page viewer, obviously)
+
+   #+begin_src emacs-lisp
+     (add-to-list 'org-modules 'ol-man)
+   #+end_src
+   
+
+** Settings
+
+    Org tempo does a lot, I should really look into more of what it has to offer.
+    At the very least, I use it for really handy expansion for scr blocks.
+    I can type =<s= and hit =TAB= to expand it to =#+begin_src=.
+
+   #+begin_src emacs-lisp
+     (require 'org-tempo)
+   #+end_src
+
+   These are a handful of settings that set up default destinations for actions that
+   act globally, such as [[*Org capture][org-capture]].
+
+   #+begin_src emacs-lisp
+     (setq org-directory "~/Dropbox")
+     (setq org-default-notes-file (concat org-directory "/index.org"))
+     (add-to-list 'org-agenda-files org-default-notes-file)
+   #+end_src
+
+** Org capture
+
+   Org capture aids you in jotting down a quick note when you think of somethimg
+   you want to remember but don't want to lose momentum in whatever task you
+   were in the middle of.
+
+   Say you were writing a new feature in an application and you realize there's
+   a possibility to refactor an adjacent part of the code. Run org capture
+   ~M-x org-capture~, and a temporary buffer opens up where you can take your
+   note. It will automatically embed any contextual information about where
+   you took the note from, such as which file you were editing, the time,
+   etc. Once you finish the note, close the buffer with ~C-c C-c~ and the note
+   is gone, the window closes and you're back to doing what you were doing
+   before.
+
+   Behind the scenes ~org-capture~ stored your note in the file of your choosing
+   for you to review on your own time when convenient.
+
+   You can customize what types of notes ~org-capture~ can take, so that you can
+   capture any any data you want, place it into any file you want. Just customize
+   the variable ~org-capture-templates~.
+
+   #+begin_src emacs-lisp
+     (setq org-capture-templates
+	   '(("t" "Todo" entry (file+headline "~/Dropbox/Work/index.org" "Tasks")
+	      "* %?\n %i\n %a")))
+   #+end_src
+  
+
+** Visual enhancements
+
+*** Emphasis markers
+
+    Hide the markers which annotate different emphasis indicators in text.
+
+    #+begin_src emacs-lisp
+      (setq org-hide-emphasis-markers t)
+    #+end_src
+
+*** bullets
+
+    It's nice to have some visual distinction between headers of different levels apart
+    from the default increasing number of astericks.
+
+    The org-bullets package replaces the astericks with different bullet glyphs and indents
+    them according to level.
+
+    #+begin_src emacs-lisp
+      (straight-use-package 'org-bullets)
+      (add-hook 'org-mode-hook
+    	      (lambda ()
+    		(org-bullets-mode 1)))
+    #+end_src
+
+*** better lists
+
+    It's nice to have unicode bullet glyphs in place of the org `-' and `*'.
+
+    #+begin_src emacs-lisp
+      (font-lock-add-keywords 'org-mode
+			      '(("^ +\\([-*]\\) "
+                                 (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "·"))))))
+    #+end_src
+
+** Babel
+
+   Org babel is a code embedding feature. It comes included in the default
+   install of Org (which itself comes with emacs core).
+
+   Every emacs-lisp block in this file is written in a source block that
+   babel will evaluate to form the actual, runnable config.
+
+   This is how [[file:init.el][init.el]] can be just one sexp; telling babel to untangle
+   this file in order to extract all the elisp.
+
+   It's far more powerfull than that though, as it allows for [[https://en.wikipedia.org/wiki/Literate_programming][literate programming]]
+   in the style of Jupyter notebooks. You can execute a bash script, record the
+   results, then feed that data into a python script and export that into an org
+   table. This is a huge boon to reproducible research, and documenting processes.
+
+   In order to execute code snippets in an org buffer, that language must be supported
+   and enabled. By default, org only authorizes emacs-lisp, but this can be easily
+   changed using ~org-bable-do-load-languages~. Your language of choice might not be
+   supported out of the box, even if you add it using ~org-babel-do-load-languages~;
+   if this is the case, you'll need to load a third-party package to support it.
+   These are typically called =ob-$LANG=. For example, to support executing haskell,
+   you must install the package =ob-haskell=.
+
+*** Enabling more languages
+
+     #+begin_src emacs-lisp
+       (org-babel-do-load-languages
+        'org-babel-load-languages
+        '((emacs-lisp . t)
+     	(calc . t)))
+     #+end_src
+
+** toc-org
+
+   Toc org is a package that dynamically generates and maintains a table
+   of contents within org documents.
+
+   All you need to do is annotate any heading with ~:TOC:~ and the plugin
+   will highjack that heading for use on save.
+
+   #+begin_src emacs-lisp
+     (straight-use-package 'toc-org)
+     (add-hook 'org-mode-hook 'toc-org-mode)
+   #+end_src
+
+
+* Dired
+
+  The Dir(ectory) Ed(itor). [[elisp:(info "(emacs) Dired")][Dired]] is a text based file manager, baked into
+  emacs. It uses the modest [[man:ls][ls]] command to generate the directory listing,
+  and adds a ton of functionality on top, allowing for inteligent commands
+  to operate on the seleted file(s). This only scratches the surface of
+  what it can do, so seriously, read the info doc.
+
+** Settings
+
+   #+begin_src emacs-lisp
+     (setq dired-kill-when-opening-new-dired-buffer t) 
+     (require 'dired)
+   #+end_src
+
+** Helper functions
+  
+   #+begin_src emacs-lisp
+     (defun dired-first-file ()
+       "Jump the point to the first dired entry that isn't . or .."
+       (interactive)
+       (beginning-of-buffer)
+       (dired-next-line 3))
+
+     (defun dired-last-file ()
+       "Jump the point to the last dired entry."
+       (interactive)
+       (end-of-buffer)
+       (dired-next-line -1))
+
+   #+end_src
+  
+

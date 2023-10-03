@@ -3,168 +3,8 @@
   "config.org"
   user-emacs-directory))
 
-;; Org
-;;; Packages
-(straight-use-package 'org-bullets)
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-;;; add org tempo as it includes (among other things), the '<s' expansion feature
-(require 'org-tempo)
-(setq org-hide-emphasis-markers t)
-;;; better list bullets
-(font-lock-add-keywords 'org-mode
-			'(("^ +\\([-*]\\) "
-			   (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "·"))))))
-
-(setq org-directory "~/Dropbox")
-(setq org-default-notes-file (concat org-directory "/index.org"))
-(add-to-list 'org-agenda-files org-default-notes-file)
-
-;;; Generate table of contents
-(straight-use-package 'toc-org)
-(add-hook 'org-mode-hook 'toc-org-mode)
-
-;;; Org specific global bindings
-(evil-define-key 'normal 'global
-  (kbd "<leader> o c") #'org-capture)
-
-;;; Org Capture
-(setq org-capture-templates
-      '(("t" "Todo" entry (file+headline "~/Dropbox/Work/index.org" "Tasks")
-	 "* %?\n %i\n %a")))
-
-
-(evil-define-key 'normal org-mode-map
-  (kbd "<tab>") 'org-cycle
-  (kbd "s-j") 'org-metadown
-  (kbd "s-k") 'org-metaup
-  (kbd "> >") 'org-shiftmetaright
-  (kbd "< <") 'org-shiftmetaleft)
-
-
-;; Tabs
-(setq tab-bar-show 1)
-(evil-define-key '(normal motion) 'global
-  (kbd "<leader> t t") #'tab-switch
-  (kbd "<leader> t n") #'tab-new
-  (kbd "<leader> t c") #'tab-close
-  (kbd "<leader> t j") #'tab-next
-  (kbd "<leader> t k") #'tab-previous
-  (kbd "<leader> t f") #'find-file-other-tab
-  (kbd "<leader> t b") #'switch-to-buffer-other-tab
-  (kbd "<leader> t r") #'tab-rename
-  (kbd "<leader> t d") #'dired-other-tab)
-
-;; better help display
-(straight-use-package 'helpful)
-;;; bind to helpful commands
-(evil-define-key '(normal motion) 'global
-  (kbd "<leader> h i") #'info
-  (kbd "<leader> h v") #'helpful-variable
-  (kbd "<leader> h f") #'helpful-function
-  (kbd "<leader> h k") #'helpful-key
-  (kbd "<leader> h m") #'describe-mode
-  (kbd "<leader> h r") #'info-display-manual
-  (kbd "<leader> h M") #'info-emacs-manual)
-  
-(evil-define-key '(normal motion) helpful-mode-map
-  (kbd "q") #'quit-window)
-
-(evil-define-key '(normal motion) help-mode-map
-  (kbd "q") #'quit-window)
-  
-;;; Evil-ify modes
-;;;; Info mode
-(evil-set-initial-state 'Info-mode 'normal)
-
-(evil-define-key '(normal motion) Info-mode-map
-  (kbd "<tab>") 'Info-next-reference
-  (kbd "S-<tab>") 'Info-prev-reference
-  (kbd "RET") 'Info-follow-nearest-node
-  "d" 'Info-directory
-  "u" 'Info-up
-  "s" 'Info-search
-  "i" 'Info-index
-  "a" 'info-apropos
-  "q" 'quit-window
-  
-  [mouse-1] 'Info-mouse-follow-nearest-node
-  [follow-link] 'mouse-face
-  
-  ;; goto
-  "gm" 'Info-menu
-  "gt" 'Info-top-node
-  "gT" 'Info-toc
-  "gj" 'Info-next
-  "gk" 'Info-prev)
-
-;;;; dired
-;; dired starts in normal mode even without explicitly stating so using `evil-set-initial-state'.
-(setq dired-kill-when-opening-new-dired-buffer t) 
-(require 'dired)
-
-(defun dired-first-file ()
-  (interactive)
-  (beginning-of-buffer)
-  (dired-next-line 3))
-
-(defun dired-last-file ()
-  (interactive)
-  (end-of-buffer)
-  (dired-next-line -1))
-
-;; launching dired
-(evil-define-key '(normal motion) 'global
-  (kbd "<leader> d d") 'dired
-  (kbd "<leader> d j") 'dired-jump)
-
-(evil-define-key '(normal motion) dired-mode-map
-  (kbd "j") 'dired-next-line
-  (kbd "k") 'dired-previous-line
-  (kbd "h") 'dired-up-directory
-  (kbd "l") 'dired-find-file
-  (kbd "s") 'eshell
-  (kbd "g g") 'dired-first-file
-  (kbd "G") 'dired-last-file
-  (kbd "<left>") 'dired-up-directory
-  (kbd "<right>") 'dired-find-file
-  (kbd "<up>") 'dired-previous-line
-  (kbd "<down>") 'dired-next-line)
-
 ;;;; ibuffer
-(evil-set-initial-state 'ibuffer-mode 'normal)
-(evil-define-key '(normal motion) ibuffer-mode-map
-  (kbd "<leader> x") 'execute-extended-command
-  ;; navigation
-  (kbd "{") 'ibuffer-backwards-next-marked
-  (kbd "}") 'ibuffer-forward-next-marked
 
-  ;; mark commands
-  (kbd "J") 'ibuffer-jump-to-buffer
-  (kbd "m") 'ibuffer-mark-forward
-  (kbd "~") 'ibuffer-toggle-marks
-  (kbd "u") 'ibuffer-unmark-forward
-  (kbd "DEL") 'ibuffer-unmark-backward
-  (kbd "* *") 'ibuffer-mark-special-buffers
-  (kbd "U") 'ibuffer-unmark-all-marks
-  (kbd "* m") 'ibuffer-mark-by-mode
-  (kbd "* M") 'ibuffer-mark-modified-buffers
-  (kbd "* r") 'ibuffer-mark-read-only-buffers
-  (kbd "* /") 'ibuffer-mark-dired-buffers
-  (kbd "* h") 'ibuffer-mark-help-buffers
-  (kbd "d") 'ibuffer-mark-for-delete
-
-  ;; actions
-  (kbd "x") 'ibuffer-do-kill-on-deletion-marks
-  (kbd "gr") 'ibuffer-update
-
-  ;; immediate actions
-  (kbd "A") 'ibuffer-do-view
-  (kbd "D") 'ibuffer-do-delete
-  (kbd "K") 'ibuffer-do-kill-lines)
-
-
-;; unbind space from running `dired-next-line' in order to free it up for space-prefixed bindings.
-(define-key dired-mode-map (kbd "SPC") nil)
 
 ;; Completion
 ;;; Project aware commands ('p' prefix)
@@ -217,6 +57,7 @@
 (evil-define-key '(normal motion visual insert emacs) 'global
   (kbd "s-<return>") 'embark-dwim
   (kbd "C-<return>") 'embark-act)
+(define-key minibuffer-local-map (kbd "C-<return>") #'embark-act)
 
 ;; Git
 (straight-use-package 'magit)
@@ -441,10 +282,92 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(connection-local-criteria-alist
-   '(((:application eshell)
+   '(((:application tramp :protocol "flatpak")
+      tramp-container-connection-local-default-flatpak-profile)
+     ((:application tramp :machine "localhost")
+      tramp-connection-local-darwin-ps-profile)
+     ((:application tramp :machine "Jonathans-MBP-3.askey.com")
+      tramp-connection-local-darwin-ps-profile)
+     ((:application tramp)
+      tramp-connection-local-default-system-profile tramp-connection-local-default-shell-profile)
+     ((:application eshell)
       eshell-connection-default-profile)))
  '(connection-local-profile-alist
-   '((eshell-connection-default-profile
+   '((tramp-container-connection-local-default-flatpak-profile
+      (tramp-remote-path "/app/bin" tramp-default-remote-path "/bin" "/usr/bin" "/sbin" "/usr/sbin" "/usr/local/bin" "/usr/local/sbin" "/local/bin" "/local/freeware/bin" "/local/gnu/bin" "/usr/freeware/bin" "/usr/pkg/bin" "/usr/contrib/bin" "/opt/bin" "/opt/sbin" "/opt/local/bin"))
+     (tramp-connection-local-darwin-ps-profile
+      (tramp-process-attributes-ps-args "-acxww" "-o" "pid,uid,user,gid,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state=abcde" "-o" "ppid,pgid,sess,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etime,pcpu,pmem,args")
+      (tramp-process-attributes-ps-format
+       (pid . number)
+       (euid . number)
+       (user . string)
+       (egid . number)
+       (comm . 52)
+       (state . 5)
+       (ppid . number)
+       (pgrp . number)
+       (sess . number)
+       (ttname . string)
+       (tpgid . number)
+       (minflt . number)
+       (majflt . number)
+       (time . tramp-ps-time)
+       (pri . number)
+       (nice . number)
+       (vsize . number)
+       (rss . number)
+       (etime . tramp-ps-time)
+       (pcpu . number)
+       (pmem . number)
+       (args)))
+     (tramp-connection-local-busybox-ps-profile
+      (tramp-process-attributes-ps-args "-o" "pid,user,group,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "stat=abcde" "-o" "ppid,pgid,tty,time,nice,etime,args")
+      (tramp-process-attributes-ps-format
+       (pid . number)
+       (user . string)
+       (group . string)
+       (comm . 52)
+       (state . 5)
+       (ppid . number)
+       (pgrp . number)
+       (ttname . string)
+       (time . tramp-ps-time)
+       (nice . number)
+       (etime . tramp-ps-time)
+       (args)))
+     (tramp-connection-local-bsd-ps-profile
+      (tramp-process-attributes-ps-args "-acxww" "-o" "pid,euid,user,egid,egroup,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state,ppid,pgid,sid,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etimes,pcpu,pmem,args")
+      (tramp-process-attributes-ps-format
+       (pid . number)
+       (euid . number)
+       (user . string)
+       (egid . number)
+       (group . string)
+       (comm . 52)
+       (state . string)
+       (ppid . number)
+       (pgrp . number)
+       (sess . number)
+       (ttname . string)
+       (tpgid . number)
+       (minflt . number)
+       (majflt . number)
+       (time . tramp-ps-time)
+       (pri . number)
+       (nice . number)
+       (vsize . number)
+       (rss . number)
+       (etime . number)
+       (pcpu . number)
+       (pmem . number)
+       (args)))
+     (tramp-connection-local-default-shell-profile
+      (shell-file-name . "/bin/sh")
+      (shell-command-switch . "-c"))
+     (tramp-connection-local-default-system-profile
+      (path-separator . ":")
+      (null-device . "/dev/null"))
+     (eshell-connection-default-profile
       (eshell-path-env-list))))
  '(custom-safe-themes
    '("6ca663019600e8e5233bf501c014aa0ec96f94da44124ca7b06d3cf32d6c5e06" default)))
