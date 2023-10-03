@@ -276,24 +276,6 @@
 
 * Bindings
 
-  First we set up short keybinds for the most common and important
-  actions.
-
-  #+begin_src emacs-lisp
-    (evil-define-key '(normal motion) 'global
-      (kbd "<leader> ;") #'eval-expression
-      (kbd "<leader> q") #'save-buffers-kill-terminal)
-
-    (evil-define-key '(normal motion visual) 'global
-      (kbd "<leader> x") 'execute-extended-command)
-
-    (evil-define-key '(insert emacs visual) 'global
-      (kbd "s-x") #'execute-extended-command)
-  #+end_src
-
-  Next we'll define keys that operate from the global keymap, meaning they are
-  accessible anywhere, from any mode.
-
 ** Global bindings
 
    First, install a nicer help viewer.
@@ -302,10 +284,21 @@
      (straight-use-package 'helpful)
    #+end_src
 
-   And now for the bindings.
+   Visual/emacs state commands
+
+   #+begin_src emacs-lisp
+    (evil-define-key '(insert emacs visual) 'global
+      (kbd "s-x") #'execute-extended-command)
+   #+end_src
+   
+   Normal state commands
    
    #+begin_src emacs-lisp
      (evil-define-key '(normal motion) 'global
+      (kbd "<leader> ;") #'eval-expression
+      (kbd "<leader> q") #'save-buffers-kill-terminal
+      (kbd "<leader> x") 'execute-extended-command
+
        ;; imenu
        (kbd "<leader> i") #'imenu
        ;; org
@@ -336,52 +329,6 @@
 
 ** Mode specific bindings
 
-*** Org
-     #+begin_src emacs-lisp
-       (evil-define-key 'normal org-mode-map
-         (kbd "<tab>") 'org-cycle
-         (kbd "s-j") 'org-metadown
-         (kbd "s-k") 'org-metaup
-         (kbd "> >") 'org-shiftmetaright
-         (kbd "< <") 'org-shiftmetaleft)
-     #+end_src
-
-*** Help(ful)
-
-    #+begin_src emacs-lisp
-    (evil-define-key '(normal motion) helpful-mode-map
-      (kbd "q") #'quit-window)
-    
-    (evil-define-key '(normal motion) help-mode-map
-      (kbd "q") #'quit-window)
-    #+end_src
-
-*** Info
-
-    #+begin_src emacs-lisp
-      (evil-define-key '(normal motion) Info-mode-map
-	(kbd "<tab>") 'Info-next-reference
-	(kbd "S-<tab>") 'Info-prev-reference
-	(kbd "RET") 'Info-follow-nearest-node
-	(kbd "d") 'Info-directory
-	(kbd "u") 'Info-up
-	(kbd "s") 'Info-search
-	(kbd "i") 'Info-index
-	(kbd "a") 'info-apropos
-	(kbd "q") 'quit-window
-
-        (kbd "y y") 'Info-copy-current-node-name
-
-	[mouse-1] 'Info-mouse-follow-nearest-node
-	[follow-link] 'mouse-face
-	;; goto
-	(kbd "g m") 'Info-menu
-	(kbd "g t") 'Info-top-node
-	(kbd "g T") 'Info-toc
-	(kbd "g j") 'Info-next
-	(kbd "g k") 'Info-prev)
-    #+end_src
-
 *** Dired
 
      I unbind space from running `dired-next-line' in order to free it up
@@ -404,6 +351,16 @@
 	(kbd "<right>") 'dired-find-file
 	(kbd "<up>") 'dired-previous-line
 	(kbd "<down>") 'dired-next-line)
+    #+end_src
+
+*** Help(ful)
+
+    #+begin_src emacs-lisp
+      (evil-define-key '(normal motion) helpful-mode-map
+	(kbd "q") #'quit-window)
+
+      (evil-define-key '(normal motion) help-mode-map
+	(kbd "q") #'quit-window)
     #+end_src
 
 *** Ibuffer
@@ -443,6 +400,41 @@
 	 (kbd "K") 'ibuffer-do-kill-lines)
      #+end_src
 
+*** Info
+
+    #+begin_src emacs-lisp
+      (evil-define-key '(normal motion) Info-mode-map
+	(kbd "<tab>") 'Info-next-reference
+	(kbd "S-<tab>") 'Info-prev-reference
+	(kbd "RET") 'Info-follow-nearest-node
+	(kbd "d") 'Info-directory
+	(kbd "u") 'Info-up
+	(kbd "s") 'Info-search
+	(kbd "i") 'Info-index
+	(kbd "a") 'info-apropos
+	(kbd "q") 'quit-window
+
+        (kbd "y y") 'Info-copy-current-node-name
+
+	[mouse-1] 'Info-mouse-follow-nearest-node
+	[follow-link] 'mouse-face
+	;; goto
+	(kbd "g m") 'Info-menu
+	(kbd "g t") 'Info-top-node
+	(kbd "g T") 'Info-toc
+	(kbd "g j") 'Info-next
+	(kbd "g k") 'Info-prev)
+    #+end_src
+
+*** Org
+     #+begin_src emacs-lisp
+       (evil-define-key 'normal org-mode-map
+         (kbd "<tab>") 'org-cycle
+         (kbd "s-j") 'org-metadown
+         (kbd "s-k") 'org-metaup
+         (kbd "> >") 'org-shiftmetaright
+         (kbd "< <") 'org-shiftmetaleft)
+     #+end_src
 
 * Org
 
