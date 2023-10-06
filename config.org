@@ -26,13 +26,28 @@
 - [[#org][Org]]
   - [[#modules][modules]]
   - [[#settings][Settings]]
+  - [[#org-agenda][Org agenda]]
   - [[#org-capture][Org capture]]
+  - [[#org-publish][Org publish]]
   - [[#visual-enhancements][Visual enhancements]]
   - [[#babel][Babel]]
   - [[#toc-org][toc-org]]
 - [[#dired][Dired]]
   - [[#settings-1][Settings]]
   - [[#helper-functions][Helper functions]]
+  - [[#dired-preview][dired-preview]]
+- [[#shells][Shells]]
+  - [[#eshell][Eshell]]
+  - [[#vterm][Vterm]]
+- [[#programming][Programming]]
+  - [[#php][PHP]]
+- [[#completion][Completion]]
+  - [[#general-minibuffer-settings][General minibuffer settings]]
+  - [[#vertico][Vertico]]
+  - [[#marginalia][Marginalia]]
+  - [[#orderless][Orderless]]
+- [[#navigation][Navigation]]
+  - [[#windows][Windows]]
 
 * Performance monitoring
   It's helpful to track how long Emacs takes to load up. This normally
@@ -229,6 +244,7 @@
     (straight-use-package 'evil)
     (setq evil-vsplit-window-right t)
     (setq evil-split-window-below t)
+    (setq evil-undo-system 'undo-redo)
     (evil-mode 1)
   #+end_src
 
@@ -295,10 +311,22 @@
    
    #+begin_src emacs-lisp
      (evil-define-key '(normal motion) 'global
-      (kbd "<leader> ;") #'eval-expression
-      (kbd "<leader> q") #'save-buffers-kill-terminal
-      (kbd "<leader> x") 'execute-extended-command
+       (kbd "<leader> ;") #'eval-expression
+       (kbd "<leader> q") #'save-buffers-kill-terminal
+       (kbd "<leader> x") 'execute-extended-command
+       (kbd "g r") #'revert-buffer
 
+       ;; buffers
+       (kbd "<leader> b b") 'switch-to-buffer
+       (kbd "<leader> b n") 'next-buffer
+       (kbd "<leader> b p") 'previous-buffer
+       (kbd "<leader> b s") 'save-buffer
+       (kbd "<leader> b i") 'ibuffer
+       (kbd "<leader> b d") 'evil-delete-buffer
+       (kbd "<leader> b k") 'kill-current-buffer
+       ;; project
+       (kbd "<leader> p f") #'project-find-file
+       (kbd "<leader> p e") #'project-eshell
        ;; imenu
        (kbd "<leader> i") #'imenu
        ;; org
@@ -314,16 +342,30 @@
        (kbd "<leader> t r") #'tab-rename
        (kbd "<leader> t d") #'dired-other-tab
        ;; help(ful) commands
-       (kbd "<leader> h i") #'info
+       (kbd "<leader> h i") #'info-emacs-manual
        (kbd "<leader> h v") #'helpful-variable
        (kbd "<leader> h f") #'helpful-function
        (kbd "<leader> h k") #'helpful-key
        (kbd "<leader> h m") #'describe-mode
        (kbd "<leader> h r") #'info-display-manual
-       (kbd "<leader> h M") #'info-emacs-manual
+       ;; windows
+       (kbd "<leader> .") 'evil-window-split
+       (kbd "<leader> /") 'evil-window-vsplit
+       (kbd "<leader> w w") #'ace-window
+       (kbd "<leader> w H") #'evil-window-move-far-left
+       (kbd "<leader> w L") #'evil-window-move-far-right
+       (kbd "<leader> w K") #'evil-window-move-very-top
+       (kbd "<leader> w J") #'evil-window-move-very-bottom
+       (kbd "<leader> w c") 'evil-window-delete
+       (kbd "<leader> w v") 'evil-window-vsplit
+       (kbd "<leader> w s") 'evil-window-split
+       (kbd "<leader> w o") 'delete-other-windows
        ;; dired
        (kbd "<leader> d d") 'dired
-       (kbd "<leader> d j") 'dired-jump)
+       (kbd "<leader> d j") 'dired-jump
+       ;; shells
+       (kbd "<leader> s e") #'eshell
+       (kbd "<leader> s t") 'vterm)
    #+end_src
 
 
@@ -477,9 +519,21 @@
 
    #+begin_src emacs-lisp
      (setq org-directory "~/Dropbox")
-     (setq org-default-notes-file (concat org-directory "/index.org"))
+     (setq org-default-notes-file (concat org-directory "/Work/index.org"))
      (add-to-list 'org-agenda-files org-default-notes-file)
    #+end_src
+
+** Org agenda
+
+    Org agenda is cool. It tries to create a day/week/month planner out of any tasks
+    or scheduled events it can find in `org-agenda-files'.
+
+    I want it to pull in appointments or reminders from the diary as well since
+    those sorts of events don't really make sense to track in org.
+
+    #+begin_src emacs-lisp
+      (setq org-agenda-include-diary t)
+    #+end_src
 
 ** Org capture
 
@@ -509,6 +563,37 @@
 	      "* %?\n %i\n %a")))
    #+end_src
   
+** Org publish
+
+   Org allows you to export any org file to a variety of formats:
+     - markdown
+     - iCalendar (for scheduled/deadline events)
+     - ODT (or word if configured) documents
+     - plain text (using unicode or ascii elemets)
+     - html
+
+   Beyond this however, you can configure org to publish a whole collection
+   of org files into a viewable site. It will configure links, css, and more
+   for you. You just need to configure the projects variable
+
+   #+begin_src emacs-lisp
+     (require 'ox-publish)
+
+     (setq org-publish-project-alist
+	   '(("blog"
+	      :base-directory "~/blog/org"
+	      :publishing-directory "~/blog/public"
+              :auto-sitemap nil
+	      :recursive t
+	      :section-numbers nil
+	      :with-author "Jon Harder"
+	      :with-toc nil
+	      :html-html5-fancy t
+	      :html-postamble nil)))
+   #+end_src
+
+   #+RESULTS:
+   | blog | :base-directory | ~/blog/org | :publishing-directory | ~/blog/public | :recursive | t | :section-numbers | nil | :with-author | Jon Harder | :with-toc | nil | :html-html5-fancy | t | :html-postamble | nil |
 
 ** Visual enhancements
 
@@ -573,10 +658,14 @@
 
      #+begin_src emacs-lisp
        (org-babel-do-load-languages
-        'org-babel-load-languages
-        '((emacs-lisp . t)
-     	(calc . t)))
+	'org-babel-load-languages
+	'((emacs-lisp . t)
+	  (python . t)
+	  (calc . t)
+	  (shell . t)))
      #+end_src
+
+     #+RESULTS:
 
 ** toc-org
 
@@ -605,6 +694,7 @@
    #+begin_src emacs-lisp
      (setq dired-kill-when-opening-new-dired-buffer t) 
      (require 'dired)
+     (setq dired-listing-switches "-hal")
    #+end_src
 
 ** Helper functions
@@ -623,5 +713,115 @@
        (dired-next-line -1))
 
    #+end_src
-  
 
+** dired-preview
+
+   sometimes it's handy to preview the file under point as you're navigating
+   a directory. dired-preview allows for exactly this behavior.
+
+   #+begin_src emacs-lisp
+     (straight-use-package 'dired-preview)
+     (evil-define-key 'normal dired-mode-map
+       (kbd "P") #'dired-preview-global-mode)
+   #+end_src
+  
+* Shells
+** Eshell
+** Vterm
+
+   #+begin_src emacs-lisp
+     (straight-use-package 'vterm)
+     (setq vterm-shell "/opt/homebrew/bin/nu")
+   #+end_src
+
+* Programming
+** PHP
+
+   Configure eglot to use inteliphense
+
+   *This doesn't work currently. not sure what's wrong with intelephense*
+   #+begin_src emacs-lisp
+     ;; (with-eval-after-load 'eglot
+     ;;   (add-to-list 'eglot-server-programs
+     ;;	    '(php-mode . ("intelephense" "--stdio"))))
+   #+end_src
+
+* Completion
+
+** General minibuffer settings
+
+   When interacting with the [[elisp:(info "(emacs) Minibuffer")][minibuffer]], you may want to execute a command
+   that itself occupies the minibuffer. Enabling recursive-minibuffers allows
+   for you to nest arbitrarily deep minibuffer commands.
+
+   #+begin_src emacs-lisp
+     (setq enable-recursive-minibuffers t)
+   #+end_src
+
+   When you've used a command once, you will probably use it again in the near
+   future. savehist is a simple package that remembers and promotes recent
+   commands to the top of the prompted list of completions.
+
+   #+begin_src emacs-lisp
+     (straight-use-package 'savehist)
+     (savehist-mode)
+   #+end_src
+
+** Vertico
+
+   Vertico is a minibuffer completion enhancement library which wraps emacs'
+   built in [[elisp:(info "(emacs) Completion")][completion]] functionality. It is a member of a new era of packages
+   which seek to enhance existing methods in emacs, rather than replace them
+   entirely (looking at you helm).
+
+   Vertico specifically seeks to enhance `completing-read', a generic method
+   that prompts users to select from one of a provided set of alternatives.
+
+   #+begin_src emacs-lisp
+     (straight-use-package 'vertico)
+     (vertico-mode 1)
+     (define-key vertico-map (kbd "<escape>") #'keyboard-escape-quit)
+   #+end_src
+
+   Vertico also has a small stable of add-ons which change the default
+   UI or behavior of vertico. Here vertico-directory is enabled, which
+   introduces commands to delete directories fragments of the prompted
+   file-path.
+
+   #+begin_src emacs-lisp
+     (require 'vertico-directory)
+     (define-key vertico-map (kbd "DEL") #'vertico-directory-delete-char)
+     (define-key vertico-map (kbd "RET") #'vertico-directory-enter)
+   #+end_src
+
+** Marginalia
+
+   Marginalia is a small package that adds contextual information "in the margins"
+   of the completion. It is a perfect compliment to the work of vertico (or
+   other completion frameworks, it doesn't care)
+
+   This means file prompts will contain file permissions, last modified time,
+   file size. Commands will display their doc string, etc.
+
+   #+begin_src emacs-lisp
+     (straight-use-package 'marginalia)
+     (marginalia-mode 1)
+   #+end_src
+
+** Orderless
+
+   
+* Navigation
+
+** Windows
+
+*** ace-window
+
+    Ace window is a handy way to supercharge `other-window' by giving
+    each option a lettered target. Simply pressing that letter jumps
+    straight to the targeted window, without having to cycle through
+    any intermediate windows in the cycle.
+
+    #+begin_src emacs-lisp
+      (straight-use-package 'ace-window)
+    #+end_src

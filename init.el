@@ -3,38 +3,17 @@
   "config.org"
   user-emacs-directory))
 
-;;;; ibuffer
-
-
-;; Completion
-;;; Project aware commands ('p' prefix)
-(evil-define-key 'normal 'global
-  (kbd "<leader> p f") 'project-find-file
-  (kbd "<leader> p e") 'project-eshell)
-
-
-;;; minibuffer
-(setq enable-recursive-minibuffers t)
-;; TODO: consider aliasing `yes-or-no-p' to `y-or-n-p'.
-;; (defalias 'yes-or-no-p 'y-or-n-p)
-
-;;;; minibuffer completion framework
-(straight-use-package 'vertico)
-(vertico-mode 1)
-(define-key vertico-map (kbd "<escape>") #'keyboard-escape-quit)
-(require 'vertico-directory)
-(define-key vertico-map
-  (kbd "DEL") #'vertico-directory-delete-char)
-(define-key vertico-map
-  (kbd "RET") #'vertico-directory-enter)
-
-;;;; save history of minibuffer commands used in order to promote them next time.
-(straight-use-package 'savehist)
-(savehist-mode)
-
-;;;; add helpfull info to any completion candidate based on category (files, commands, buffers, etc.)
-(straight-use-package 'marginalia)
-(marginalia-mode 1)
+;;; temp function for hilton work
+(defun hilton-extract (file dest)
+  (interactive "fFile: \nDDestination: ")
+  (let ((unzipped (file-name-sans-extension file))
+	(shortened (format "%s.csv"
+			   (car (split-string file "\\.")))))
+    (shell-command (format "unzip %s"
+			   file))
+    (rename-file unzipped (concat
+			   dest "/" shortened))
+    (delete-file file)))
 
 ;;;; better sorting using space-separrated search fragments
 (straight-use-package 'orderless)
@@ -73,6 +52,7 @@
   (kbd "RET") 'magit-visit-thing
   (kbd "i") 'magit-gitignore
   (kbd "l") 'magit-log
+  (kbd "P") 'magit-push
   ;; delete
   (kbd "d d") 'magit-discard)
 
@@ -127,38 +107,9 @@
   ;; (interactive)
   ;; (kill-buffer t))
 
-;;;; Buffer wrangling
- (evil-define-key '(normal motion) 'global
-  (kbd "<leader> b b") 'switch-to-buffer
-  (kbd "<leader> b n") 'next-buffer
-  (kbd "<leader> b p") 'previous-buffer
-  (kbd "<leader> b s") 'save-buffer
-  (kbd "<leader> b i") 'ibuffer
-  (kbd "<leader> b d") 'evil-delete-buffer
-  (kbd "<leader> b k") 'kill-current-buffer)
-
 ;;;; Shells
 (setq explicit-shell-file-name "/bin/zsh"
       shell-file-name "/bin/zsh")
-(evil-define-key 'normal 'global
-  (kbd "<leader>s e") 'eshell)
-
-;;;; window navigation
-(evil-define-key '(normal motion) 'global
-  ;; short command for most common operation. might need
-  ;; to give it up if I deem the 'o' prefix handy for a
-  ;; group of commands
-  (kbd "<leader> .") 'evil-window-split
-  (kbd "<leader> /") 'evil-window-vsplit
-  (kbd "<leader> w w") 'other-window
-  (kbd "<leader> w c") 'evil-window-delete
-  (kbd "<leader> w v") 'evil-window-vsplit
-  (kbd "<leader> w s") 'evil-window-split
-  (kbd "<leader> w o") 'delete-other-windows)
-
-;;; Why doesn't this work?
-;; (define-key minibuffer-local-map (kbd "ESC") 'keyboard-escape-quit)
-
 
 ;; Window Management
 (setq switch-to-buffer-obey-display-actions t)
@@ -370,7 +321,10 @@
      (eshell-connection-default-profile
       (eshell-path-env-list))))
  '(custom-safe-themes
-   '("6ca663019600e8e5233bf501c014aa0ec96f94da44124ca7b06d3cf32d6c5e06" default)))
+   '("6ca663019600e8e5233bf501c014aa0ec96f94da44124ca7b06d3cf32d6c5e06" default))
+ '(org-agenda-files '("/Users/jharder/Dropbox/Work/index.org"))
+ '(org-modules
+   '(ol-bbdb ol-bibtex ol-docview ol-doi ol-eww ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-w3m ol-man)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
