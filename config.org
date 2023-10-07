@@ -533,6 +533,7 @@
 
     #+begin_src emacs-lisp
       (setq org-agenda-include-diary t)
+      (setq org-agenda-restore-windows-after-quit t)
     #+end_src
 
 ** Org capture
@@ -579,21 +580,42 @@
    #+begin_src emacs-lisp
      (require 'ox-publish)
 
+     (setq org-publish-use-timestamps-flag nil)
+
+     (setq org-html-validation-link nil            ;; Don't show validation link
+	   org-html-head-include-scripts nil       ;; Use our own scripts
+	   org-html-head-include-default-style nil ;; Use our own styles
+	   org-html-head "<link rel=\"stylesheet\" href=\"https://cdn.simplecss.org/simple.min.css\" />
+     <link rel=\"stylesheet\" href=\"/css/stylesheet.css\" />
+     <link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\">")
+
      (setq org-publish-project-alist
-	   '(("blog"
+	   `(("blog" :components ("blog-org" "blog-images" "blog-css"))
+	     ("blog-org"
 	      :base-directory "~/blog/org"
 	      :publishing-directory "~/blog/public"
-              :auto-sitemap nil
+	      :auto-sitemap nil
 	      :recursive t
 	      :section-numbers nil
+	      :exclude "README"
 	      :with-author "Jon Harder"
 	      :with-toc nil
 	      :html-html5-fancy t
-	      :html-postamble nil)))
+              :html-preamble nil
+	      :html-postamble nil)
+	     ("blog-css"
+	      :base-directory "~/blog/org/css"
+	      :base-extension "css"
+	      :publishing-directory "~/blog/public/css"
+	      :recursive t
+	      :publishing-function org-publish-attachment)
+	     ("blog-images"
+	      :base-directory "~/blog/org/images"
+	      :base-extension "ico\\|png\\|jpg\\|jpeg"
+	      :publishing-directory "~/blog/public/images"
+	      :recursive t
+	      :publishing-function org-publish-attachment)))
    #+end_src
-
-   #+RESULTS:
-   | blog | :base-directory | ~/blog/org | :publishing-directory | ~/blog/public | :recursive | t | :section-numbers | nil | :with-author | Jon Harder | :with-toc | nil | :html-html5-fancy | t | :html-postamble | nil |
 
 ** Visual enhancements
 
