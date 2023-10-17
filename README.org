@@ -1,0 +1,7 @@
+* Emacs configuration
+
+This repo contains my emacs configuration, utilizing a literate org file
+to document all the configuration.
+
+There will be no further updates to this repo and I have moved this
+configuration into a monorepo of all my dotfiles, [[https://github.com/JonHarder/dotfiles]].
